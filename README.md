@@ -1,7 +1,15 @@
 # 📍 Consulta de CEP — Bitrix24 App
 
-> Aplicativo de preenchimento automático de endereço via CEP para o Bitrix24 CRM.  
+> Aplicativo de preenchimento automático de endereço via CEP para o Bitrix24 CRM.
 > Desenvolvido por **LibeSales** · Parceiros Gold Bitrix24
+
+---
+
+## 🌐 URL do Aplicativo (GitHub Pages)
+
+```
+https://hyago153.github.io/bitrix24-cep-app/
+```
 
 ---
 
@@ -9,12 +17,10 @@
 
 ```
 bitrix24-cep-app/
-├── src/
-│   └── index.html        # Aplicativo principal (single-file)
-├── assets/
-│   └── logo.svg          # Logo LibeSales original
 ├── docs/
 │   └── usage.md          # Guia de instalação e uso
+├── LOGO_LIBE.svg          # Logo LibeSales
+├── index.html             # Aplicativo principal (single-file)
 └── README.md
 ```
 
@@ -34,7 +40,7 @@ bitrix24-cep-app/
 
 1. Acesse **Bitrix24 → Mercado de Aplicativos → Adicionar App**
 2. Escolha **"Aplicativo por URL"**
-3. Informe a URL onde o `src/index.html` está hospedado
+3. Informe a URL: \`https://hyago153.github.io/bitrix24-cep-app/\`
 4. Configure o placement como **CRM → Contato → Painel lateral**
 5. Defina as permissões de acesso ao CRM
 
@@ -42,15 +48,15 @@ bitrix24-cep-app/
 
 ## 🛠️ Campos CRM mapeados
 
-| Campo    | ID Bitrix24             |
-|----------|-------------------------|
-| CEP      | `UF_CRM_1772350313579`  |
-| Logradouro | `UF_CRM_1772350340846` |
-| Bairro   | `UF_CRM_1772350608337`  |
-| Cidade   | `UF_CRM_1772350625864`  |
-| Estado   | `UF_CRM_1772350638188`  |
-| Número   | `UF_CRM_1772350591083`  |
-| Complemento | `UF_CRM_1772419053`  |
+| Campo       | ID Bitrix24              |
+|-------------|--------------------------|
+| CEP         | \`UF_CRM_1772350313579\`   |
+| Logradouro  | \`UF_CRM_1772350340846\`   |
+| Bairro      | \`UF_CRM_1772350608337\`   |
+| Cidade      | \`UF_CRM_1772350625864\`   |
+| Estado      | \`UF_CRM_1772350638188\`   |
+| Número      | \`UF_CRM_1772350591083\`   |
+| Complemento | \`UF_CRM_1772419053\`      |
 
 ---
 
