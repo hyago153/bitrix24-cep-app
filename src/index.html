@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Consulta CEP · Libesales</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #181c27;
+      --border:    #252a38;
+      --accent:    #4f7cff;
+      --accent2:   #00d4aa;
+      --text:      #e8ecf4;
+      --muted:     #7a8299;
+      --success:   #00d4aa;
+      --error:     #ff4f6a;
+      --radius:    12px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 18px 28px;
+      gap: 18px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(79,124,255,0.35);
+    }
+    .header-text h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .header-text p {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── CEP INPUT AREA ── */
+    .cep-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .field-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    input[type="text"] {
+      width: 100%;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79,124,255,.15);
+    }
+    input[type="text"]::placeholder { color: var(--border); font-weight: 400; letter-spacing: 0; }
+
+    .btn-search {
+      height: 44px;
+      padding: 0 18px;
+      background: linear-gradient(135deg, var(--accent), #6b93ff);
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity .2s, transform .15s;
+      box-shadow: 0 4px 16px rgba(79,124,255,.3);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-search:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-search:active { transform: translateY(0); }
+    .btn-search:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    /* ── STATUS BANNER ── */
+    .status {
+      display: none;
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 12.5px;
+      font-weight: 500;
+      align-items: center;
+      gap: 8px;
+    }
+    .status.show { display: flex; }
+    .status.loading {
+      background: rgba(79,124,255,.1);
+      border: 1px solid rgba(79,124,255,.25);
+      color: #9ab4ff;
+    }
+    .status.success {
+      background: rgba(0,212,170,.08);
+      border: 1px solid rgba(0,212,170,.25);
+      color: var(--success);
+    }
+    .status.error {
+      background: rgba(255,79,106,.08);
+      border: 1px solid rgba(255,79,106,.25);
+      color: var(--error);
+    }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(79,124,255,.3);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── RESULT GRID ── */
+    .result-grid {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .result-grid.show { display: flex; }
+
+    .section-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .fields-group {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .field-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .field-item:last-child { border-bottom: none; }
+    .field-item:hover { background: rgba(255,255,255,.02); }
+
+    .field-key {
+      font-size: 11px;
+      color: var(--muted);
+      width: 88px;
+      flex-shrink: 0;
+    }
+    .field-val {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      flex: 1;
+    }
+
+    /* editable inline fields */
+    .field-editable {
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 2px 4px;
+      width: 100%;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .field-editable:focus { border-color: var(--accent); }
+    .field-editable::placeholder { color: var(--muted); font-style: italic; }
+
+    /* ── SAVE BUTTON ── */
+    .btn-save {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--accent2), #00b894);
+      border: none;
+      border-radius: var(--radius);
+      color: #041a14;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+      box-shadow: 0 4px 20px rgba(0,212,170,.25);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-save:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-save:active { transform: translateY(0); }
+    .btn-save:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      font-size: 10px;
+      color: var(--border);
+      letter-spacing: .04em;
+    }
+    .footer span { color: var(--muted); }
+
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-icon">📍</div>
+    <div class="header-text">
+      <h1>Consulta de CEP</h1>
+      <p>Preenche o endereço automaticamente</p>
+    </div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- CEP INPUT -->
+  <div class="cep-row">
+    <div class="field-wrap">
+      <label for="cepInput">CEP</label>
+      <input type="text" id="cepInput" placeholder="00000-000" maxlength="9"/>
+    </div>
+    <button class="btn-search" id="btnSearch">
+      🔍 Buscar
+    </button>
+  </div>
+
+  <!-- STATUS -->
+  <div class="status" id="status">
+    <div class="spinner" id="statusSpinner" style="display:none"></div>
+    <span id="statusMsg"></span>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-grid" id="resultGrid">
+    <div class="section-label">Endereço encontrado</div>
+    <div class="fields-group">
+      <div class="field-item">
+        <span class="field-key">Logradouro</span>
+        <span class="field-val" id="r-logradouro">—</span>
+      </div>
+      <div class="field-item">
+        <span class="field-key">Bairro</span>
+        <span class="field-val" id="r-bairro">—</span>
+      </div>
+      <div class="field-item">
+        <span class="field-key">Cidade</span>
+        <span class="field-val" id="r-cidade">—</span>
+      </div>
+      <div class="field-item">
+        <span class="field-key">Estado</span>
+        <span class="field-val" id="r-estado">—</span>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:4px">Complemento manual</div>
+    <div class="fields-group">
+      <div class="field-item">
+        <span class="field-key">Número</span>
+        <input class="field-editable" type="text" id="r-numero" placeholder="Ex: 42"/>
+      </div>
+      <div class="field-item">
+        <span class="field-key">Complemento</span>
+        <input class="field-editable" type="text" id="r-complemento" placeholder="Ex: Apto 3"/>
+      </div>
+    </div>
+
+    <button class="btn-save" id="btnSave">
+      ✅ Salvar no Contato
+    </button>
+  </div>
+
+  <div class="footer">Powered by <span>ViaCEP</span> · Libesales</div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     BITRIX24 JS SDK
+══════════════════════════════════════════════════ -->
+<script src="https://api.bitrix24.com/api/v1/"></script>
+
+<script>
+// ── MAPEAMENTO DOS CAMPOS PERSONALIZADOS ──────────────────────────
+const FIELDS = {
+  cep:         'UF_CRM_1772350313579',
+  logradouro:  'UF_CRM_1772350340846',
+  bairro:      'UF_CRM_1772350608337',
+  cidade:      'UF_CRM_1772350625864',
+  estado:      'UF_CRM_1772350638188',
+  numero:      'UF_CRM_1772350591083',
+  complemento: 'UF_CRM_1772419053',
+};
+
+// ── ESTADO GLOBAL ─────────────────────────────────────────────────
+let contactId   = null;
+let viaCepData  = null;
+
+// ── MÁSCARA DE CEP ────────────────────────────────────────────────
+document.getElementById('cepInput').addEventListener('input', function () {
+  let v = this.value.replace(/\D/g, '').slice(0, 8);
+  if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5);
+  this.value = v;
+});
+
+// ── ENTER para buscar ─────────────────────────────────────────────
+document.getElementById('cepInput').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') document.getElementById('btnSearch').click();
+});
+
+// ── HELPERS DE STATUS ─────────────────────────────────────────────
+function showStatus(type, msg) {
+  const el  = document.getElementById('status');
+  const sp  = document.getElementById('statusSpinner');
+  const txt = document.getElementById('statusMsg');
+  el.className = 'status show ' + type;
+  sp.style.display = type === 'loading' ? 'block' : 'none';
+  txt.textContent = msg;
+}
+function hideStatus() {
+  document.getElementById('status').className = 'status';
+}
+
+// ── BUSCA CEP ─────────────────────────────────────────────────────
+document.getElementById('btnSearch').addEventListener('click', async function () {
+  const raw = document.getElementById('cepInput').value.replace(/\D/g, '');
+  if (raw.length !== 8) {
+    showStatus('error', 'Digite um CEP válido com 8 dígitos.');
+    return;
+  }
+
+  document.getElementById('resultGrid').className = 'result-grid';
+  this.disabled = true;
+  showStatus('loading', 'Consultando CEP...');
+
+  try {
+    const res  = await fetch(`https://viacep.com.br/ws/${raw}/json/`);
+    const data = await res.json();
+
+    if (data.erro) {
+      showStatus('error', 'CEP não encontrado. Verifique e tente novamente.');
+      this.disabled = false;
+      return;
+    }
+
+    viaCepData = data;
+
+    document.getElementById('r-logradouro').textContent = data.logradouro  || '(não informado)';
+    document.getElementById('r-bairro').textContent     = data.bairro      || '(não informado)';
+    document.getElementById('r-cidade').textContent     = data.localidade  || '(não informado)';
+    document.getElementById('r-estado').textContent     = data.uf          || '(não informado)';
+
+    document.getElementById('resultGrid').className = 'result-grid show';
+    showStatus('success', `✔ CEP ${data.cep} encontrado em ${data.localidade} - ${data.uf}`);
+
+  } catch (err) {
+    showStatus('error', 'Erro de rede. Verifique sua conexão.');
+  }
+
+  this.disabled = false;
+});
+
+// ── SALVAR NO BITRIX24 ────────────────────────────────────────────
+document.getElementById('btnSave').addEventListener('click', async function () {
+  if (!viaCepData || !contactId) {
+    showStatus('error', 'Dados incompletos. Faça a busca novamente.');
+    return;
+  }
+
+  this.disabled = true;
+  showStatus('loading', 'Salvando no Bitrix24...');
+
+  const cepFormatado = document.getElementById('cepInput').value;
+
+  const fields = {};
+  fields[FIELDS.cep]         = cepFormatado;
+  fields[FIELDS.logradouro]  = viaCepData.logradouro  || '';
+  fields[FIELDS.bairro]      = viaCepData.bairro       || '';
+  fields[FIELDS.cidade]      = viaCepData.localidade   || '';
+  fields[FIELDS.estado]      = viaCepData.uf           || '';
+  fields[FIELDS.numero]      = document.getElementById('r-numero').value;
+  fields[FIELDS.complemento] = document.getElementById('r-complemento').value;
+
+  BX24.callMethod(
+    'crm.contact.update',
+    { id: contactId, fields: fields },
+    function (result) {
+      if (result.error()) {
+        showStatus('error', 'Erro ao salvar: ' + result.error_description());
+      } else {
+        showStatus('success', '✔ Endereço salvo com sucesso no Contato!');
+        // Recarrega o card do Bitrix24 para refletir os novos valores
+        BX24.refreshApplicationCache && BX24.refreshApplicationCache();
+      }
+      document.getElementById('btnSave').disabled = false;
+    }
+  );
+});
+
+// ── INICIALIZAÇÃO COM O SDK DO BITRIX24 ───────────────────────────
+BX24.init(function () {
+  // Pega os dados do contexto (qual contato está aberto)
+  const placement = BX24.placement.info();
+
+  if (placement && placement.options && placement.options.ID) {
+    contactId = placement.options.ID;
+
+    // Pré-preenche o campo CEP se já estiver salvo
+    BX24.callMethod(
+      'crm.contact.get',
+      { id: contactId },
+      function (result) {
+        if (!result.error()) {
+          const data = result.data();
+          const cepSalvo = data[FIELDS.cep];
+          if (cepSalvo) {
+            document.getElementById('cepInput').value = cepSalvo;
+          }
+        }
+      }
+    );
+  } else {
+    // Modo de preview (fora do Bitrix24, ex: GitHub Pages direto)
+    showStatus('loading', 'Modo preview — fora do Bitrix24');
+    contactId = 'PREVIEW';
+  }
+});
+</script>
+</body>
+</html>
